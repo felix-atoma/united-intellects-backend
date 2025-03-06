@@ -2,10 +2,12 @@ const express = require("express");
 const router = express.Router();
 const subscriberController = require("../controllers/subscriberController");
 
-// POST /api/subscribe - Add a new subscriber
-router.post("/subscribe", subscriberController.addSubscriber);
+router.post("/subscribe", (req, res, next) => {
+    console.log("[DEBUG] Received a POST request to /api/subscribe");
+    console.log("[DEBUG] Request Body:", req.body);
+    next();
+}, subscriberController.addSubscriber);
 
-// GET /api/subscribers - Get all subscribers
 router.get("/subscribers", subscriberController.getSubscribers);
 
 module.exports = router;
