@@ -9,7 +9,7 @@ dotenv.config();
 const app = express();
 const PORT = process.env.INDEX_PORT || 5003;
 
-// Allowed Origins for CORS
+// ✅ Allowed Origins for CORS
 const allowedOrigins = [
     "https://united-intellects.vercel.app",
     "https://united-intellectuals.netlify.app",
@@ -21,30 +21,37 @@ const corsOptions = {
         if (!origin || allowedOrigins.includes(origin)) {
             callback(null, true);
         } else {
+            console.error(`[CORS] Blocked request from: ${origin}`);
             callback(new Error("Not allowed by CORS"));
         }
     },
     credentials: true,
 };
 
-// Middleware
+// ✅ Middleware
 app.use(cors(corsOptions));
 app.use(express.json());
 
-// Connect to MongoDB
-connectDB()
-    .then(() => console.log("[Server] MongoDB connected."))
-    .catch((err) => console.error("[Server] MongoDB connection error:", err));
+// ✅ Connect to MongoDB before starting the server
+(async () => {
+    try {
+        await connectDB();
+        console.log("[Server] MongoDB connected.");
 
-// Routes
-app.use("/api", subscriberRoutes);
+        // ✅ Routes
+        app.use("/api", subscriberRoutes);
 
-// Default route for testing
-app.get("/", (req, res) => {
-    res.send("API is running...");
-});
+        // ✅ Default route for testing
+        app.get("/", (req, res) => {
+            res.json({ message: "API is running..." });
+        });
 
-// Start the server
-app.listen(PORT, () => {
-    console.log(`[Server] Server running on http://localhost:${PORT}`);
-});
+        // ✅ Start the server
+        app.listen(PORT, () => {
+            console.log(`[Server] Running on http://localhost:${PORT}`);
+        });
+    } catch (err) {
+        console.error("[Server] MongoDB connection error:", err);
+        process.exit(1); // Exit if DB connection fails
+    }
+})();

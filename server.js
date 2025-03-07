@@ -1,8 +1,8 @@
 require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
-const nodemailer = require("nodemailer");
 const mongoose = require("mongoose");
+const nodemailer = require("nodemailer");
 const connectDB = require("./db");
 
 const app = express();
@@ -20,7 +20,7 @@ app.use(
       if (!origin || allowedOrigins.includes(origin)) {
         callback(null, true);
       } else {
-        console.log("🚫 Blocked by CORS: ", origin);
+        console.error("🚫 Blocked by CORS:", origin);
         callback(new Error("Not allowed by CORS"));
       }
     },
@@ -33,9 +33,9 @@ app.use(
 app.use(express.json());
 
 // ✅ Connect to MongoDB
-connectDB().catch((error) => {
-  console.error("❌ MongoDB Connection Error:", error);
-});
+connectDB()
+  .then(() => console.log("✅ MongoDB Connected Successfully"))
+  .catch((error) => console.error("❌ MongoDB Connection Error:", error));
 
 // ✅ Root Route (Prevents "Cannot GET /" error)
 app.get("/", (req, res) => {
@@ -110,8 +110,8 @@ app.post("/contact", async (req, res) => {
   }
 });
 
-// ✅ Start Server
+// ✅ Start Server (Render Fix)
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
+app.listen(PORT, "0.0.0.0", () => {
   console.log(`🚀 Server running on port ${PORT}`);
 });
