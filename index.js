@@ -9,6 +9,12 @@ const subscriberRoutes = require("./routes/subscriberRoutes");
 const app = express();
 const PORT = process.env.PORT || 5000;
 
+// ✅ Ensure Required Environment Variables Exist
+if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS || !process.env.CLIENT_EMAIL) {
+    console.error("❌ Missing required environment variables! Check EMAIL_USER, EMAIL_PASS, and CLIENT_EMAIL.");
+    process.exit(1);
+}
+
 // ✅ Allowed Origins for CORS
 const allowedOrigins = [
     "https://united-intellects.vercel.app",
@@ -22,7 +28,7 @@ app.use(
             if (!origin || allowedOrigins.includes(origin)) {
                 callback(null, true);
             } else {
-                console.error("🚫 Blocked by CORS:", origin);
+                console.warn("🚫 Blocked by CORS:", origin);
                 callback(new Error("Not allowed by CORS"));
             }
         },
@@ -91,28 +97,29 @@ app.post("/contact", async (req, res) => {
         console.log("✅ Data saved to MongoDB");
 
         // Send confirmation emails
-        await transporter.sendMail({
-            from: process.env.EMAIL_USER,
-            to: CLIENT_EMAIL,
-            subject: `New Contact Form Submission from ${fullName}`,
-            text: `Name: ${fullName}\nEmail: ${email}\nPhone: ${phone}\nAddress: ${address}\nSubject: ${subject}\nMessage: ${message}`,
-        });
-
-        await transporter.sendMail({
-            from: process.env.EMAIL_USER,
-            to: email,
-            subject: `Thank you for contacting us, ${fullName}`,
-            text: `Dear ${fullName},\n\nThank you for reaching out! We have received your message and will get back to you shortly.\n\nBest regards,\nUnited-Intellects`,
-        });
+        await Promise.all([
+            transporter.sendMail({
+                from: process.env.EMAIL_USER,
+                to: CLIENT_EMAIL,
+                subject: `New Contact Form Submission from ${fullName}`,
+                text: `Name: ${fullName}\nEmail: ${email}\nPhone: ${phone}\nAddress: ${address}\nSubject: ${subject}\nMessage: ${message}`,
+            }),
+            transporter.sendMail({
+                from: process.env.EMAIL_USER,
+                to: email,
+                subject: `Thank you for contacting us, ${fullName}`,
+                text: `Dear ${fullName},\n\nThank you for reaching out! We have received your message and will get back to you shortly.\n\nBest regards,\nUnited-Intellects`,
+            }),
+        ]);
 
         res.status(200).json({ message: "Message sent successfully!" });
     } catch (error) {
-        console.error("❌ Error:", error);
+        console.error("❌ Error sending email:", error);
         res.status(500).json({ error: "Failed to send the message. Please try again." });
     }
 });
 
-// ✅ Subscriber Routes (from index.js)
+// ✅ Subscriber Routes
 app.use("/api", subscriberRoutes);
 
 // ✅ Start Server (Fix for Render)
