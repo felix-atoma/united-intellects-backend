@@ -37,7 +37,7 @@ connectDB()
   .then(() => console.log("✅ MongoDB Connected Successfully"))
   .catch((error) => console.error("❌ MongoDB Connection Error:", error));
 
-// ✅ Root Route (Prevents "Cannot GET /" error)
+// ✅ Root Route
 app.get("/", (req, res) => {
   res.status(200).json({ message: "Welcome to United-Intellects Backend!" });
 });
@@ -64,7 +64,7 @@ const Contact = mongoose.model("Contact", contactSchema);
 const transporter = nodemailer.createTransport({
   service: "gmail",
   auth: {
-    user: process.env.EMAIL_USER,
+    user: process.env.EMAIL_USER, // Use a business email, not a personal Gmail
     pass: process.env.EMAIL_PASS,
   },
 });
@@ -88,16 +88,18 @@ app.post("/contact", async (req, res) => {
     await newContact.save();
     console.log("✅ Data saved to MongoDB");
 
-    // Send confirmation emails
+    // Send email to the client (United Intellects team)
     await transporter.sendMail({
-      from: process.env.EMAIL_USER,
+      from: `"${fullName}" <noreply@united-intellects.com>`, // Prevents personal email from showing
       to: CLIENT_EMAIL,
       subject: `New Contact Form Submission from ${fullName}`,
       text: `Name: ${fullName}\nEmail: ${email}\nPhone: ${phone}\nAddress: ${address}\nSubject: ${subject}\nMessage: ${message}`,
+      replyTo: email, // Ensures replies go to the client
     });
 
+    // Send confirmation email to the user
     await transporter.sendMail({
-      from: process.env.EMAIL_USER,
+      from: `"United Intellects" <noreply@united-intellects.com>`, // Professional sender email
       to: email,
       subject: `Thank you for contacting us, ${fullName}`,
       text: `Dear ${fullName},\n\nThank you for reaching out! We have received your message and will get back to you shortly.\n\nBest regards,\nUnited-Intellects`,
@@ -110,7 +112,7 @@ app.post("/contact", async (req, res) => {
   }
 });
 
-// ✅ Start Server (Render Fix)
+// ✅ Start Server
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, "0.0.0.0", () => {
   console.log(`🚀 Server running on port ${PORT}`);
